@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "PIRCMES Farm",
+    "slug": "pircmes-farm",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "gh.gov.mofa.pircmes.farm",
+      "adaptiveIcon": { "backgroundColor": "#006B3F" },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": ["expo-camera"]
+  }
+}

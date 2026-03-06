@@ -1,0 +1,72 @@
+services:
+
+  # ─── PostgreSQL 16 ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:       pircmes
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Schema is auto-executed by postgres on first start (empty volume only)
+      - ./server/src/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pircmes"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Express API + Socket.io ────────────────────────────────────────────────
+  server:
+    build: ./server
+    ports:
+      - "3001:3000"
+    environment:
+      # Override DATABASE_URL so it resolves to the postgres service, not localhost
+      DATABASE_URL:                 postgresql://postgres:postgres@postgres:5432/pircmes
+      JWT_SECRET:                   pircmes-demo-secret-2026
+      JWT_EXPIRY:                   7d
+      PORT:                         3000
+      DAILY_ENTRY_CUTOFF_HOUR:      20
+      MORTALITY_THRESHOLD_PERCENT:  5
+      OCR_VARIANCE_THRESHOLD:       20
+    volumes:
+      # Persist uploaded mortality photos across container restarts
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─── React Web Dashboard (Nginx) ────────────────────────────────────────────
+  web:
+    build:
+      context: ./web
+      args:
+        # VITE vars are baked into browser JS at build time.
+        # Port 3001 = host-side mapping for the server container (3000 is taken by Grafana).
+        VITE_API_URL:    http://localhost:3001
+        VITE_SOCKET_URL: http://localhost:3001
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+
+  # ─── One-shot seed runner (run manually after first start) ──────────────────
+  # Usage: docker compose --profile seed run --rm seed
+  seed:
+    build: ./server
+    command: node src/db/seed.js
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pircmes
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - seed
+
+volumes:
+  pgdata:    # PostgreSQL data (persistent)
+  uploads:   # Mortality photo uploads (persistent)

@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "PIRCMES Service Provider",
+    "slug": "pircmes-sp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "gh.gov.mofa.pircmes.sp",
+      "adaptiveIcon": { "backgroundColor": "#006B3F" },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": ["expo-camera"]
+  }
+}
